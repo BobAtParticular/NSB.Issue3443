@@ -1,6 +1,5 @@
 ﻿using System;
 using NServiceBus;
-using NServiceBus.Logging;
 
 namespace Issue3443
 {
@@ -8,16 +7,19 @@ namespace Issue3443
     {
         static void Main(string[] args)
         {
-            LogManager.Use<DefaultFactory>().Level(LogLevel.Info);
-            BusConfiguration busConfiguration = new BusConfiguration();
-            busConfiguration.EndpointName("TestCustomPolicy");
-            busConfiguration.UseSerialization<JsonSerializer>();
-            busConfiguration.UsePersistence<InMemoryPersistence>();
+            Configure.Serialization.Json();
+            Configure configure = Configure.With();
+            configure.DefineEndpointName("TestCustomPolicy");
+            configure.DefaultBuilder();
+            configure.UseInMemoryTimeoutPersister();
+            configure.InMemorySubscriptionStorage();
+            configure.UseTransport<Msmq>();
+            var rp = new NServiceBusSecondLevelHandling();
+            Configure.Features.SecondLevelRetries(s => s.CustomRetryPolicy(rp.RetryPolicy));
 
-            busConfiguration.SecondLevelRetries().CustomRetryPolicy(new NServiceBusSecondLevelHandling().RetryPolicy);
-
-            using (IBus bus = Bus.Create(busConfiguration).Start())
+            using (IStartableBus startableBus = configure.UnicastBus().CreateBus())
             {
+                IBus bus = startableBus.Start(() => configure.ForInstallationOn<NServiceBus.Installation.Environments.Windows>().Install());;
                 while (Console.ReadLine() != null)
                 {
                     bus.SendLocal(new DoSomething());
