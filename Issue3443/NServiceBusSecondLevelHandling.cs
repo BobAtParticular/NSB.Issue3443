@@ -13,12 +13,12 @@ namespace Issue3443
 
             Console.WriteLine("Inside custom retry policy: " + retries);
 
-            if (retries >= 1)
+            if (retries > 4)
             {
                 return TimeSpan.MinValue;
             }
 
-            return TimeSpan.FromSeconds(10);
+            return TimeSpan.FromSeconds(2);
         }
     }
 }
