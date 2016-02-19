@@ -1,11 +1,12 @@
 using System;
 using NServiceBus;
+using NServiceBus.Transports;
 
 namespace Issue3443
 {
     public class NServiceBusSecondLevelHandling
     {
-        public TimeSpan RetryPolicy(TransportMessage transportMessage)
+        public TimeSpan RetryPolicy(IncomingMessage transportMessage)
         {
             string value;
 

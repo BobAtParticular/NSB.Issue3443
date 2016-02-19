@@ -9,20 +9,20 @@ namespace Issue3443
         static void Main(string[] args)
         {
             LogManager.Use<DefaultFactory>().Level(LogLevel.Info);
-            BusConfiguration busConfiguration = new BusConfiguration();
-            busConfiguration.EndpointName("TestCustomPolicy");
-            busConfiguration.UseSerialization<JsonSerializer>();
-            busConfiguration.UsePersistence<InMemoryPersistence>();
+            var configuration = new EndpointConfiguration();
+            configuration.EndpointName("TestCustomPolicy");
+            configuration.UseSerialization<JsonSerializer>();
+            configuration.UsePersistence<InMemoryPersistence>();
+            configuration.SecondLevelRetries().CustomRetryPolicy(new NServiceBusSecondLevelHandling().RetryPolicy);
 
-            busConfiguration.SecondLevelRetries().CustomRetryPolicy(new NServiceBusSecondLevelHandling().RetryPolicy);
+            var bus = Endpoint.Start(configuration).Result;
 
-            using (IBus bus = Bus.Create(busConfiguration).Start())
+            while (Console.ReadLine() != null)
             {
-                while (Console.ReadLine() != null)
-                {
-                    bus.SendLocal(new DoSomething());
-                }
+                bus.SendLocal(new DoSomething());
             }
+
+            bus.Stop().RunSynchronously();
         }
     }
 }
